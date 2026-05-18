@@ -1,443 +1,270 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Begrippenmatcher</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vraag & Antwoord Matcher - INK-model</title>
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --card: #ffffff;
-      --line: #d9deea;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --ok: #d1fae5;
-      --ok-border: #10b981;
-      --bad: #fee2e2;
-      --bad-border: #ef4444;
-      --accent: #2563eb;
-      --shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-
-    * { box-sizing: border-box; }
-
     body {
+      font-family: Arial, sans-serif;
+      background: #f4f6fb;
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px;
+      padding: 20px;
+      color: #1f2937;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 10px;
     }
 
     .intro {
-      color: var(--muted);
+      text-align: center;
+      color: #555;
       margin-bottom: 20px;
     }
 
-    .toolbar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    button {
-      border: none;
-      background: var(--accent);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 1rem;
-      box-shadow: var(--shadow);
-    }
-
-    button.secondary {
-      background: #374151;
-    }
-
-    .status {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .board {
+    .container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 24px;
+      gap: 20px;
+      max-width: 1300px;
+      margin: auto;
     }
 
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 20px;
+    .column {
+      background: white;
       padding: 20px;
-      box-shadow: var(--shadow);
-      min-height: 420px;
-      max-height: 70vh;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-height: 80vh;
       overflow-y: auto;
     }
 
-    .panel h2 {
+    .column h2 {
       margin-top: 0;
-      font-size: 1.2rem;
     }
 
-    .item-list {
-      display: grid;
-      gap: 14px;
-    }
-
-    .term {
+    .question, .answer {
       background: #eef4ff;
-      border: 2px solid #bfdbfe;
-      border-radius: 14px;
-      padding: 14px;
+      border: 2px solid #c7d7ff;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .answer {
       cursor: grab;
       font-weight: bold;
-      user-select: none;
     }
 
-    .term:active {
-      cursor: grabbing;
-    }
-
-    .term.dragging {
-      opacity: 0.55;
+    .answer.dragging {
+      opacity: 0.5;
     }
 
     .dropzone {
-      border: 2px dashed var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      background: #fafbff;
-      transition: 0.2s ease;
-      min-height: 92px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
+      margin-top: 10px;
+      border: 2px dashed #b8c1d1;
+      border-radius: 10px;
+      min-height: 45px;
+      padding: 8px;
+      background: #fafafa;
     }
 
     .dropzone.over {
-      border-color: var(--accent);
-      background: #eff6ff;
-      transform: scale(1.01);
+      background: #dbeafe;
+      border-color: #2563eb;
     }
 
-    .definition {
-      color: var(--text);
-      line-height: 1.45;
+    .correct {
+      border-color: #16a34a !important;
+      background: #dcfce7 !important;
     }
 
-    .slot {
-      min-height: 44px;
+    .incorrect {
+      border-color: #dc2626 !important;
+      background: #fee2e2 !important;
+    }
+
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 0 10px;
+      border: none;
       border-radius: 10px;
-      background: white;
-      border: 1px solid var(--line);
-      padding: 8px;
-      display: flex;
-      align-items: center;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
     }
 
-    .slot.empty {
-      color: var(--muted);
-      font-style: italic;
-    }
-
-    .dropzone.correct {
-      background: var(--ok);
-      border-color: var(--ok-border);
-    }
-
-    .dropzone.incorrect {
-      background: var(--bad);
-      border-color: var(--bad-border);
+    button:hover {
+      opacity: 0.9;
     }
 
     .feedback {
+      font-size: 14px;
       margin-top: 6px;
-      font-size: 0.95rem;
       font-weight: bold;
     }
 
-    .small {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    @media (max-width: 900px) {
-      .board {
+    @media(max-width: 900px) {
+      .container {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Begrippenmatcher</h1>
-    <p class="intro">Sleep de begrippen naar de juiste definities. Klik daarna op <strong>Controleer</strong>.</p>
 
-    <div class="toolbar">
-      <button id="checkBtn">Controleer</button>
-      <button id="resetBtn" class="secondary">Opnieuw</button>
-    </div>
+<h1>Vraag & Antwoord Matcher - INK-model</h1>
+<p class="intro">Sleep het juiste antwoord naar de juiste vraag en klik daarna op Controleer.</p>
 
-    <div class="status" id="statusBox">
-      Sleep alle begrippen naar een definitie.
-    </div>
+<div class="controls">
+  <button onclick="checkAnswers()">Controleer</button>
+  <button onclick="location.reload()">Opnieuw</button>
+</div>
 
-    <div class="board">
-      <section class="panel">
-        <h2>Begrippen</h2>
-        <p class="small">Deze lijst wordt automatisch door elkaar gezet.</p>
-        <div class="item-list" id="termsList"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Definities</h2>
-        <p class="small">Plaats in elk vak precies één begrip.</p>
-        <div class="item-list" id="definitionsList"></div>
-      </section>
-    </div>
+<div class="container">
+  <div class="column">
+    <h2>Vragen</h2>
+    <div id="questions"></div>
   </div>
 
-  <script>
-    const pairs = [
-      { id: 1, term: 'Kwaliteitsbeheersing', definition: 'Beheersen van de kwaliteit door middel van meten, het vergelijken van meetgegevens met de gestelde eisen en het bijsturen van afwijkingen' },
-      { id: 2, term: 'Kwaliteitszorg', definition: 'Alle activiteiten en maatregelen die je neemt om kwaliteit te leveren, die nodig zijn om alle facetten van een organisatie continu te optimaliseren en te verbeteren' },
-      { id: 3, term: 'Kwaliteitsborging', definition: 'Alle maatregelen die je neemt om ervoor te zorgen dat je aan de eisen van de klant kunt blijven voldoen' },
-      { id: 4, term: 'Kwaliteitsmanagement-systeem', definition: 'Systeem dat je bouwt om kwaliteitsbeheersing na te streven' },
-      { id: 5, term: 'Kwaliteitsmanagement', definition: 'Alle activiteiten voor het besturen, beheersen en inrichten van een organisatie' },
-      { id: 6, term: 'Kwaliteitskosten', definition: 'Extra kosten die je maakt om producten en diensten te leveren die voldoen aan de verwachting en eisen van de klant' },
-      { id: 7, term: 'Voortbrengingsproces', definition: 'Het proces waarin alle activiteiten plaatsvinden die leiden tot de levering van het product of de dienst waar de klant aan het einde van het proces direct mee te maken heeft' },
-      { id: 8, term: 'Procesmanagement', definition: 'Het beheersen en sturen van de organisatie door gebruik te maken van (informatie uit de) processen' },
-      { id: 9, term: 'Organisatiestructuur', definition: 'De harde kant van de organisatie, zoals processen, prestatieindicatoren' },
-      { id: 10, term: 'Organisatiecultuur', definition: 'De zachte kant van de organisatie, zoals gedrag, stijl van leidinggeven, samenwerken' }
-    ];
+  <div class="column">
+    <h2>Antwoorden</h2>
+    <div id="answers"></div>
+  </div>
+</div>
 
-    const termsList = document.getElementById('termsList');
-    const definitionsList = document.getElementById('definitionsList');
-    const statusBox = document.getElementById('statusBox');
-    const checkBtn = document.getElementById('checkBtn');
-    const resetBtn = document.getElementById('resetBtn');
+<script>
+const pairs = [
+  { question: 'De inrichting van de organisatie beschrijf je in de ?', answer: 'organisatiegebieden' },
+  { question: 'Dit is wat de feedback loop in het INK model doet', answer: 'verbeteren en vernieuwen' },
+  { question: 'Geld, tijd, gebouwen van een bedrijf zijn voorbeelden van', answer: 'middelen' },
+  { question: 'Het gedrag van het management wordt beschreven in het gebied?', answer: 'leiderschap' },
+  { question: 'Wat is de kern van het cyclisch verbeteren in het INK-model', answer: 'PDCA' },
+  { question: 'Omzet en winst indicatoren horen bij welk resultaat gebied', answer: 'bestuur en financiën' },
+  { question: 'Welk gebied van Het INK-model is zowel organisatie als resultaat gebied', answer: 'processen' },
+  { question: 'Het Ink-model is vooral nuttig als je een analyse maakt van?', answer: 'kwaliteit management' },
+  { question: 'Leverbetrouwbaarheid is een indicator voor het resultaat richting?', answer: 'klanten' },
+  { question: 'De metingen die je verricht over de prestaties van de organisatie staan in de ?', answer: 'resultaatgebieden' },
+  { question: 'CO2 emmisies is een indicator in het resultaatgebied?', answer: 'maatschappij' },
+  { question: 'Het plan van de organisatie is beschreven in de ?', answer: 'strategie' },
+  { question: 'Om de prestaties te meten wordt gebruik gemaakt van ?', answer: 'indicatoren' },
+  { question: 'Het INK-model is de Nederlandse versie van welk model ?', answer: 'EFQM' },
+  { question: 'De dimensie die kijkt bij het INK-model naar samenwerkende partners heet', answer: 'keten' },
+  { question: 'Hoe ziekteverzuim wordt gemanaged wordt beschreven in het organisatiegebied?', answer: 'medewerkers' }
+];
 
-    let placements = {};
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
 
-    function shuffle(array) {
-      const copy = [...array];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
+const questionContainer = document.getElementById('questions');
+const answerContainer = document.getElementById('answers');
+
+const shuffledAnswers = shuffle(pairs);
+
+pairs.forEach((pair, index) => {
+  const qDiv = document.createElement('div');
+  qDiv.className = 'question';
+  qDiv.dataset.answer = pair.answer;
+
+  qDiv.innerHTML = `
+    <strong>${index + 1}. ${pair.question}</strong>
+    <div class="dropzone">Sleep antwoord hier</div>
+    <div class="feedback"></div>
+  `;
+
+  const dropzone = qDiv.querySelector('.dropzone');
+
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.classList.add('over');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('over');
+  });
+
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('over');
+
+    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedEl = document.getElementById(draggedId);
+
+    if (dropzone.firstChild && dropzone.firstChild.classList && dropzone.firstChild.classList.contains('answer')) {
+      answerContainer.appendChild(dropzone.firstChild);
     }
 
-    function createTermElement(item) {
-      const div = document.createElement('div');
-      div.className = 'term';
-      div.draggable = true;
-      div.dataset.id = item.id;
-      div.textContent = item.term;
+    dropzone.innerHTML = '';
+    dropzone.appendChild(draggedEl);
+  });
 
-      div.addEventListener('dragstart', () => {
-        div.classList.add('dragging');
-      });
+  questionContainer.appendChild(qDiv);
+});
 
-      div.addEventListener('dragend', () => {
-        div.classList.remove('dragging');
-      });
+shuffledAnswers.forEach((pair, index) => {
+  const aDiv = document.createElement('div');
+  aDiv.className = 'answer';
+  aDiv.textContent = pair.answer;
+  aDiv.draggable = true;
+  aDiv.id = 'answer-' + index;
 
-      return div;
+  aDiv.addEventListener('dragstart', e => {
+    aDiv.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', aDiv.id);
+  });
+
+  aDiv.addEventListener('dragend', () => {
+    aDiv.classList.remove('dragging');
+  });
+
+  aDiv.addEventListener('click', () => {
+    answerContainer.appendChild(aDiv);
+  });
+
+  answerContainer.appendChild(aDiv);
+});
+
+function checkAnswers() {
+  const questions = document.querySelectorAll('.question');
+  let score = 0;
+
+  questions.forEach(q => {
+    const correctAnswer = q.dataset.answer;
+    const dropzone = q.querySelector('.dropzone');
+    const feedback = q.querySelector('.feedback');
+
+    dropzone.classList.remove('correct', 'incorrect');
+
+    const placed = dropzone.querySelector('.answer');
+
+    if (!placed) {
+      dropzone.classList.add('incorrect');
+      feedback.textContent = 'Nog geen antwoord geplaatst';
+      return;
     }
 
-    function createDefinitionElement(item) {
-      const zone = document.createElement('div');
-      zone.className = 'dropzone';
-      zone.dataset.id = item.id;
-
-      const def = document.createElement('div');
-      def.className = 'definition';
-      def.textContent = item.definition;
-
-      const slot = document.createElement('div');
-      slot.className = 'slot empty';
-      slot.textContent = 'Sleep hier een begrip naartoe';
-
-      const feedback = document.createElement('div');
-      feedback.className = 'feedback';
-
-      zone.appendChild(def);
-      zone.appendChild(slot);
-      zone.appendChild(feedback);
-
-      zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        zone.classList.add('over');
-      });
-
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('over');
-      });
-
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('over');
-
-        const dragged = document.querySelector('.term.dragging');
-        if (!dragged) return;
-
-        const draggedId = Number(dragged.dataset.id);
-        const zoneId = Number(zone.dataset.id);
-
-        // Verwijder oude plaatsing van dit begrip
-        for (const key in placements) {
-          if (placements[key] === draggedId) {
-            delete placements[key];
-          }
-        }
-
-        // Als hier al een begrip stond, stuur dat terug naar links
-        const currentPlacedId = placements[zoneId];
-        if (currentPlacedId) {
-          const oldTerm = document.querySelector(`.term[data-id="${currentPlacedId}"]`);
-          if (oldTerm) {
-            termsList.appendChild(oldTerm);
-          }
-        }
-
-        placements[zoneId] = draggedId;
-        slot.classList.remove('empty');
-        slot.textContent = dragged.textContent;
-        dragged.remove();
-
-        zone.classList.remove('correct', 'incorrect');
-        feedback.textContent = '';
-        updateStatus();
-      });
-
-      return zone;
+    if (placed.textContent === correctAnswer) {
+      dropzone.classList.add('correct');
+      feedback.textContent = 'Goed!';
+      score++;
+    } else {
+      dropzone.classList.add('incorrect');
+      feedback.textContent = 'Niet juist';
     }
+  });
 
-    function updateSlots() {
-      document.querySelectorAll('.dropzone').forEach(zone => {
-        const zoneId = Number(zone.dataset.id);
-        const slot = zone.querySelector('.slot');
-        const feedback = zone.querySelector('.feedback');
+  alert(`Score: ${score} van de ${pairs.length} goed!`);
+}
+</script>
 
-        if (placements[zoneId]) {
-          const found = pairs.find(p => p.id === placements[zoneId]);
-          slot.classList.remove('empty');
-          slot.textContent = found ? found.term : '';
-        } else {
-          slot.classList.add('empty');
-          slot.textContent = 'Sleep hier een begrip naartoe';
-        }
-
-        zone.classList.remove('correct', 'incorrect');
-        feedback.textContent = '';
-      });
-    }
-
-    function updateStatus(message = null) {
-      const totalPlaced = Object.keys(placements).length;
-      if (message) {
-        statusBox.textContent = message;
-      } else {
-        statusBox.textContent = `${totalPlaced} van de ${pairs.length} begrippen geplaatst.`;
-      }
-    }
-
-    function render() {
-      placements = {};
-      termsList.innerHTML = '';
-      definitionsList.innerHTML = '';
-
-      const shuffledTerms = shuffle(pairs);
-      const shuffledDefinitions = shuffle(pairs);
-
-      shuffledTerms.forEach(item => termsList.appendChild(createTermElement(item)));
-      shuffledDefinitions.forEach(item => definitionsList.appendChild(createDefinitionElement(item)));
-
-      updateStatus('Sleep alle begrippen naar een definitie.');
-    }
-
-    checkBtn.addEventListener('click', () => {
-      let correct = 0;
-
-      document.querySelectorAll('.dropzone').forEach(zone => {
-        const zoneId = Number(zone.dataset.id);
-        const feedback = zone.querySelector('.feedback');
-        zone.classList.remove('correct', 'incorrect');
-
-        if (!placements[zoneId]) {
-          zone.classList.add('incorrect');
-          feedback.textContent = 'Nog geen begrip geplaatst.';
-          return;
-        }
-
-        if (placements[zoneId] === zoneId) {
-          zone.classList.add('correct');
-          feedback.textContent = 'Goed!';
-          correct++;
-        } else {
-          zone.classList.add('incorrect');
-          const right = pairs.find(p => p.id === zoneId);
-          feedback.textContent = `Niet juist. Correct antwoord: ${right.term}`;
-        }
-      });
-
-      statusBox.textContent = `Score: ${correct} van de ${pairs.length} goed.`;
-    });
-
-    resetBtn.addEventListener('click', render);
-
-    // Klik op een geplaatst begrip om het terug te zetten naar links
-    document.addEventListener('click', (e) => {
-      const slot = e.target.closest('.slot');
-      if (!slot) return;
-
-      const zone = slot.closest('.dropzone');
-      const zoneId = Number(zone.dataset.id);
-
-      const placedId = placements[zoneId];
-      if (!placedId) return;
-
-      // Zoek bijbehorend begrip
-      const item = pairs.find(p => p.id === placedId);
-      if (!item) return;
-
-      // Maak nieuw draggable element
-      const termEl = createTermElement(item);
-      termsList.appendChild(termEl);
-
-      // Verwijder plaatsing
-      delete placements[zoneId];
-
-      // Reset visueel
-      slot.classList.add('empty');
-      slot.textContent = 'Sleep hier een begrip naartoe';
-      zone.classList.remove('correct', 'incorrect');
-      const feedback = zone.querySelector('.feedback');
-      if (feedback) feedback.textContent = '';
-
-      updateStatus();
-    });
-    render();
-  </script>
 </body>
 </html>
